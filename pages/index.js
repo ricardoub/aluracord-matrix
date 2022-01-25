@@ -144,6 +144,7 @@ export default function PaginaInicial() {
                             }}
                             src={username.length > 2  ? `https://github.com/${username}.png` : ''}
                         />
+                        {username.length > 2  ?
                         <Text
                             variant="body4"
                             styleSheet={{
@@ -153,8 +154,9 @@ export default function PaginaInicial() {
                                 borderRadius: '1000px'
                             }}
                         >
-                            {username.length > 2  ? username : '' }
+                            {username}
                         </Text>
+                        : ''}
                     </Box>
                     {/* Photo Area */}
                 </Box>
