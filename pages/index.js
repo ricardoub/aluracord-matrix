@@ -153,7 +153,7 @@ export default function PaginaInicial() {
                                 borderRadius: '1000px'
                             }}
                         >
-                            {username}
+                            {username.length > 2  ? username : '' }
                         </Text>
                     </Box>
                     {/* Photo Area */}
