@@ -20,7 +20,7 @@ export default function ChatPage() {
     [x]   - ter if para caso seja enter limpar a variável
     [x] - lista de mensagens
     [x] - botão enviar, com mesma função do enter
-    [ ] - botão apagar mensagem - usar filter
+    [x] - botão apagar mensagem - usar filter, conforme codigo do rafaasimi
     */
 
     function handleNovaMensagem(novaMensagem) {
@@ -34,6 +34,15 @@ export default function ChatPage() {
             ...listaDeMensagens,
         ]);
         setMensagem('');
+    }
+
+    function handleDeleteMessage(event) {
+        const messageId = Number(event.target.dataset.id)
+        const messageListFiltered = listaDeMensagens.filter((messageFiltered) => {
+            return messageFiltered.id != messageId
+        })
+
+        setListaDeMensagens(messageListFiltered)
     }
 
     // ./Sua lógica vai aqui
@@ -76,7 +85,7 @@ export default function ChatPage() {
                     }}
                 >
 
-                    <MessageList mensagens={listaDeMensagens} />
+                    <MessageList mensagens={listaDeMensagens} handleDeleteMessage={handleDeleteMessage} />
                     {/* {listaDeMensagens.map((mensagemAtual) => {
                         return (
                             <li key={mensagemAtual.id}>
@@ -157,6 +166,10 @@ function MessageDelete(props) {
 
 function MessageList(props) {
     console.log('MessageList', props.listaDeMensagens);
+
+    // conforme codigo rafaasimi
+    const handleDeleteMessage = props.handleDeleteMessage
+
     return (
         <Box
             tag="ul"
@@ -211,9 +224,30 @@ function MessageList(props) {
                             >
                                 {(new Date().toLocaleDateString())}
                             </Text>
+                            <Text
+                                onClick={handleDeleteMessage}
+                                styleSheet={{
+                                    fontSize: '10px',
+                                    fontWeight: 'bold',
+                                    marginLeft: 'auto',
+                                    color: '#FFF',
+                                    backgroundColor: 'rgba(0,0,0,.5)',
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                }}
+                                tag="span"
+                                data-id={mensagem.id}
+                            >
+                                X
+                            </Text>
                         </Box>
                         {mensagem.texto}
-                        <Button
+                        {/* <Button
                             //value={mensagem.id}
                             // onClick={(mensagem) => {
                             //     const id = mensagem.id;
@@ -230,7 +264,7 @@ function MessageList(props) {
                             colorVariant='neutral'
                             label='Apagar'
                             href="/chat"
-                        />
+                        /> */}
                     </Text>
                 );
             })}
