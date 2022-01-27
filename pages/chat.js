@@ -1,11 +1,30 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React from 'react';
 import appConfig from '../config.json';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function ChatPage() {
     // Sua lógica vai aqui
+    //console.log(SUPABASE_ANON_KEY);
+    //console.log(SUPABASE_URL);
+    
     const [mensagem, setMensagem] = React.useState('');
     const [listaDeMensagens, setListaDeMensagens] = React.useState([]);
+    const [username, setUsername] = React.useState('ricardoub');
+
+    React.useEffect(() => {
+        supabaseClient
+            .from('mensagens')
+            .select('*')
+            .then(({ data }) => {
+                console.log(data);
+                setListaDeMensagens(data);
+            });
+    }, []);
 
     // Usuario
     /*
@@ -23,16 +42,35 @@ export default function ChatPage() {
     [x] - botão apagar mensagem - usar filter, conforme codigo do rafaasimi
     */
 
+    // fetch('https://api.github.com/users/omariosouto')
+    //     .then(async (respostaDoServidor)=>{
+    //         const respostaEsperada = await respostaDoServidor.json();
+    //         console.log(respostaEsperada);
+    // })
+
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
-            id: listaDeMensagens.length + 1,
-            de: 'vanessametonini',
+            // id: listaDeMensagens.length + 1,
+            de: username,
             texto: novaMensagem,
         }
-        setListaDeMensagens([
-            mensagem,
-            ...listaDeMensagens,
-        ]);
+        supabaseClient
+            .from('mensagens')
+            .insert([
+                // Tem que ser um objeto com os mesmos campos que você escreveu no supabase
+                mensagem
+            ])
+            .then((data) => {
+                console.log('Criando mensagem: ', data);
+                supabaseClient
+                    .from('mensagens')
+                    .select('*')
+                    .then(({ data }) => {
+                        console.log(data);
+                        setListaDeMensagens(data);
+                    });
+            });
+
         setMensagem('');
     }
 
@@ -86,13 +124,6 @@ export default function ChatPage() {
                 >
 
                     <MessageList mensagens={listaDeMensagens} handleDeleteMessage={handleDeleteMessage} />
-                    {/* {listaDeMensagens.map((mensagemAtual) => {
-                        return (
-                            <li key={mensagemAtual.id}>
-                                {mensagemAtual.de}: {mensagemAtual.texto}
-                            </li>
-                        )
-                    })} */}
 
                     <Box
                         as="form"
@@ -183,6 +214,7 @@ function MessageList(props) {
             }}
         >
             {props.mensagens.map((mensagem) => {
+                //console.log('mensagem :' + mensagem.de);
                 return (
                     <Text
                         key={mensagem.id}
@@ -209,7 +241,7 @@ function MessageList(props) {
                                     display: 'inline-block',
                                     marginRight: '8px',
                                 }}
-                                src={`https://github.com/vanessametonini.png`}
+                                src={`https://github.com/${mensagem.de}.png`}
                             />
                             <Text tag="strong">
                                 {mensagem.de}
@@ -247,24 +279,6 @@ function MessageList(props) {
                             </Text>
                         </Box>
                         {mensagem.texto}
-                        {/* <Button
-                            //value={mensagem.id}
-                            // onClick={(mensagem) => {
-                            //     const id = mensagem.id;
-                            //     console.log('mensagem apagada: ' + id);
-                            //     MessageDelete(mensagem);
-                            // }}
-                            onClick={function (event, mensagem){
-                                event.preventDefault();
-                                console.log('Alguem apagou mensagem' + event);
-                                // window.location.href = '/chat';
-                                //roteamento.push('/chat');
-                            }}
-                            variant='tertiary'
-                            colorVariant='neutral'
-                            label='Apagar'
-                            href="/chat"
-                        /> */}
                     </Text>
                 );
             })}
