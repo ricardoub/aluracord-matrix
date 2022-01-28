@@ -1,57 +1,65 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React from 'react';
 import appConfig from '../config.json';
+import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
+import { ButtonSendSticker } from '../src/components/ButtonSendSticker';
 
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+function escutaMensagensEmTempoReal(adicionaMensagem) {
+    return supabaseClient
+        .from('mensagens')
+        .on('INSERT', ({ respostaLive }) => {
+            adicionaMensagem(respostaLive.new);
+        })
+        .subscribe();
+}
+
 export default function ChatPage() {
     // Sua lógica vai aqui
-    //console.log(SUPABASE_ANON_KEY);
-    //console.log(SUPABASE_URL);
-    
+    const roteamento = useRouter();
+    const usuarioLogado = roteamento.query.username;
     const [mensagem, setMensagem] = React.useState('');
     const [listaDeMensagens, setListaDeMensagens] = React.useState([]);
-    const [username, setUsername] = React.useState('ricardoub');
 
     React.useEffect(() => {
         supabaseClient
             .from('mensagens')
             .select('*')
             .then(({ data }) => {
-                console.log(data);
+                console.log('Dados da consulta: ', data);
                 setListaDeMensagens(data);
             });
+        
+        escutaMensagensEmTempoReal((novaMensagem) => {
+            console.log('Nova mensagem: ', novaMensagem);
+            console.log('listaDeMensagens: ', listaDeMensagens);
+
+            // setListaDeMensagens([
+            //     novaMensagem,
+            //     ...listaDeMensagens,
+            // ])
+            // quero reusar um valor de referencia (objeto/array)
+            // tenho que passar uma função pro state
+
+            setListaDeMensagens((valorAtualDaLista) => {
+                console.log('valorAtualDaLista: ', valorAtualDaLista);
+
+                return [
+                    novaMensagem,
+                    ...valorAtualDaLista,
+                ]
+            });
+        });
     }, []);
-
-    // Usuario
-    /*
-    - digita no campo textarea
-    - aperta enter para enviar
-    - tem que adicionar o texto na listagem
-
-    // dev
-    [x] - criar campo textarea
-    [x] - criar o onChange, 
-    [x]   - usa o useState
-    [x]   - ter if para caso seja enter limpar a variável
-    [x] - lista de mensagens
-    [x] - botão enviar, com mesma função do enter
-    [x] - botão apagar mensagem - usar filter, conforme codigo do rafaasimi
-    */
-
-    // fetch('https://api.github.com/users/omariosouto')
-    //     .then(async (respostaDoServidor)=>{
-    //         const respostaEsperada = await respostaDoServidor.json();
-    //         console.log(respostaEsperada);
-    // })
 
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
             // id: listaDeMensagens.length + 1,
-            de: username,
+            de: usuarioLogado,
             texto: novaMensagem,
         }
         supabaseClient
@@ -60,15 +68,8 @@ export default function ChatPage() {
                 // Tem que ser um objeto com os mesmos campos que você escreveu no supabase
                 mensagem
             ])
-            .then((data) => {
+            .then(({ data }) => {
                 console.log('Criando mensagem: ', data);
-                supabaseClient
-                    .from('mensagens')
-                    .select('*')
-                    .then(({ data }) => {
-                        console.log(data);
-                        setListaDeMensagens(data);
-                    });
             });
 
         setMensagem('');
@@ -155,6 +156,12 @@ export default function ChatPage() {
                                 backgroundColor: appConfig.theme.colors.neutrals[800],
                                 marginRight: '12px',
                                 color: appConfig.theme.colors.neutrals[200],
+                            }}
+                        />
+                        <ButtonSendSticker 
+                            onStickerClick={(sticker) => {
+                                console.log('[USANDO O COMPONENTE] Salva esse sticker no banco');
+                                handleNovaMensagem(':sticker: ' + sticker);
                             }}
                         />
                         <Button
@@ -278,7 +285,14 @@ function MessageList(props) {
                                 X
                             </Text>
                         </Box>
-                        {mensagem.texto}
+                        {mensagem.texto.startsWith(':sticker:') 
+                            ? (
+                                <Image src={mensagem.texto.replace(':sticker:', '')}/>
+                            )
+                            : (
+                                mensagem.texto
+                            )}
+
                     </Text>
                 );
             })}
@@ -286,3 +300,24 @@ function MessageList(props) {
         </Box>
     )
 }
+// Usuario
+/*
+- digita no campo textarea
+- aperta enter para enviar
+- tem que adicionar o texto na listagem
+
+// dev
+[x] - criar campo textarea
+[x] - criar o onChange, 
+[x]   - usa o useState
+[x]   - ter if para caso seja enter limpar a variável
+[x] - lista de mensagens
+[x] - botão enviar, com mesma função do enter
+[x] - botão apagar mensagem - usar filter, conforme codigo do rafaasimi
+*/
+
+// fetch('https://api.github.com/users/omariosouto')
+//     .then(async (respostaDoServidor)=>{
+//         const respostaEsperada = await respostaDoServidor.json();
+//         console.log(respostaEsperada);
+// })
